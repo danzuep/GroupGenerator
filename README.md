@@ -2,12 +2,12 @@
 
 A dependency-free page that splits a list of unique names into groups.
 
-- Enter names, one per line, with an optional gender (`Ann, F`).
-- Choose the number of groups.
-- List pairs that can't share a group (`Ann, Bob`).
-- Optionally mix genders evenly.
+- Enter names as `Last, First, Gender` (gender optional) in List view, or switch to Grid view and paste columns straight from Excel.
+- Choose the number of groups, pick pairs to keep apart, and optionally mix genders evenly.
+- **Save** a class by name and **Load** it again next term; settings are stored in the browser's localStorage.
+- **Demo** fills in pseudo-random sample data and generates groups in one click.
 
-Open `src/index.html` in a browser (keep `groups.js` beside it). Run tests with `node --test` in `src/`.
-CI uploads `index.html` and `groups.js` as the `group-generator` artifact; `pages.yml` publishes `src/` to GitHub Pages.
+Open `src/index.html` in a browser (keep `groups.js` beside it). Run tests with `node --test test`.
 
-Settings (names, pairs, group count, gender mix) are saved in the browser's localStorage.
+Pages is built with Hugo (`hugo.yaml`, `.github/workflows/hugo.yml`), which publishes `src/` as-is.
+`release.yml` runs the tests on pull requests and uploads `index.html` and `groups.js` as the `group-generator` artifact.

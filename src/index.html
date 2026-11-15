@@ -5,70 +5,336 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Group Generator</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; }
-  .row { display: flex; gap: 1rem; flex-wrap: wrap; }
-  .row > label { flex: 1 1 18rem; }
-  textarea { width: 100%; height: 12rem; box-sizing: border-box; }
-  #groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 1rem; margin-top: 1rem; }
-  .group { border: 1px solid #888; border-radius: 6px; padding: .5rem 1rem; }
-  .error { color: #b00020; }
+  :root {
+    --bg: #f3f4f8; --card: #fff; --text: #1d2433; --muted: #6b7280; --border: #e2e5ee;
+    --accent: #4f46e5; --accent-text: #fff; --danger: #c62828; --radius: 14px;
+    --f: #ec4899; --m: #3b82f6; --x: #10b981; --u: #9ca3af;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #11141c; --card: #1b2030; --text: #e8eaf2; --muted: #9aa3b5; --border: #2c3348; --accent: #818cf8; --accent-text: #11141c; --danger: #ef5350; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, sans-serif; }
+  main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+  h1 { margin: 0; font-size: 1.6rem; }
+  h2 { margin: 0 0 .75rem; font-size: 1.05rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-top: 1rem; box-shadow: 0 1px 3px rgb(0 0 0 / .06); }
+  .cols { margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1rem; }
+  .cols .card { margin-top: 0; }
+  .bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .bar.between { justify-content: space-between; }
+  label.field { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; color: var(--muted); }
+  input, select, textarea, button { font: inherit; color: inherit; }
+  input, select, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: .45rem .6rem; }
+  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { width: 100%; height: 14rem; resize: vertical; font-family: ui-monospace, monospace; font-size: .9rem; }
+  button { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .45rem .9rem; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  button.icon { padding: .1rem .5rem; line-height: 1.2; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
+  .tablewrap { max-height: 20rem; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .8rem; color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--card); }
+  td { padding: .15rem .25rem .15rem 0; }
+  td input { width: 100%; }
+  td.g { width: 4.5rem; }
+  td.x { width: 2rem; }
+  .hint { color: var(--muted); font-size: .85rem; margin: .5rem 0 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; }
+  .chip { display: inline-flex; align-items: center; gap: .25rem; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: .1rem .2rem .1rem .7rem; font-size: .9rem; }
+  .error { color: var(--danger); min-height: 1.4em; margin: 1rem 0 0; font-weight: 500; }
+  #groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 1rem; margin-top: 1rem; }
+  #groups .card { margin: 0; border-top: 4px solid var(--accent); }
+  #groups ul { list-style: none; margin: 0; padding: 0; }
+  #groups li { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; }
+  .dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--u); flex: none; }
+  .dot.f { background: var(--f); } .dot.m { background: var(--m); } .dot.x { background: var(--x); }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-<h1>Group Generator</h1>
-<div class="row">
-  <label>Names, one per line, optional gender after a comma
-    <textarea id="names" placeholder="Ann, F&#10;Bob, M&#10;Cam"></textarea>
-  </label>
-  <label>Can't share a group, one pair per line
-    <textarea id="pairs" placeholder="Ann, Bob"></textarea>
-  </label>
-</div>
-<p>
-  <label>Groups <input id="count" type="number" min="1" value="2" style="width:4rem"></label>
-  <label><input id="mix" type="checkbox"> Evenly mix genders</label>
-  <button id="go">Generate</button>
-</p>
-<p id="error" class="error" role="alert"></p>
-<div id="groups"></div>
+<main>
+  <header>
+    <h1>Group Generator</h1>
+    <div class="bar">
+      <button id="demo" title="Fill in sample data and generate groups">✨ Demo</button>
+    </div>
+  </header>
+
+  <section class="card" aria-label="Saved classes">
+    <h2>Classes</h2>
+    <div class="bar">
+      <label class="field">Class name <input id="className" placeholder="e.g. Year 9 Maths"></label>
+      <button id="save" style="align-self:flex-end">💾 Save</button>
+      <label class="field">Saved classes <select id="saved"></select></label>
+      <button id="load" style="align-self:flex-end">Load</button>
+      <button id="delete" style="align-self:flex-end">Delete</button>
+    </div>
+    <p class="hint" id="status" role="status"></p>
+  </section>
+
+  <section class="card" aria-label="Names">
+    <div class="bar between">
+      <h2>Names <span id="count-people" class="hint"></span></h2>
+      <div class="seg" role="group" aria-label="Name entry view">
+        <button id="viewList" aria-pressed="true">List</button>
+        <button id="viewGrid" aria-pressed="false">Grid</button>
+      </div>
+    </div>
+    <div id="listView">
+      <textarea id="names" aria-label="Names" placeholder="Last, First, Gender&#10;Lee, Ann, F&#10;Ray, Bob, M"></textarea>
+      <p class="hint">One person per line: <b>Last, First, Gender</b>. Gender is optional. Pasting from Excel works.</p>
+    </div>
+    <div id="gridView" hidden>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Last name</th><th>First name</th><th>Gender</th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="bar" style="margin-top:.5rem"><button id="addRow">+ Add row</button></div>
+      <p class="hint">Paste columns copied from Excel into any cell to fill rows from there down.</p>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section class="card" aria-label="Separate people">
+      <h2>Keep apart</h2>
+      <div class="bar">
+        <select id="pairA" aria-label="First person"></select>
+        <span>+</span>
+        <select id="pairB" aria-label="Second person"></select>
+        <button id="addPair">Add</button>
+      </div>
+      <div class="chips" id="pairs"></div>
+      <p class="hint">These people won't be placed in the same group.</p>
+    </section>
+
+    <section class="card" aria-label="Options">
+      <h2>Options</h2>
+      <div class="bar">
+        <label class="field">Number of groups <input id="count" type="number" min="1" value="2" style="width:6rem"></label>
+        <label style="align-self:flex-end"><input id="mix" type="checkbox"> Evenly mix genders</label>
+      </div>
+      <p class="bar" style="margin-top:1rem"><button id="go" class="primary">Generate groups</button></p>
+    </section>
+  </div>
+
+  <p id="error" class="error" role="alert"></p>
+  <div id="groups" aria-live="polite"></div>
+</main>
 <script src="groups.js"></script>
 <script>
+  const { fromRows, textToRows, rowsToText, generateGroups, demoData } = GroupGenerator;
   const $ = (id) => document.getElementById(id);
-  const KEY = "group-generator-settings";
-  const fields = ["names", "pairs", "count"];
-  const save = () => {
-    const data = Object.fromEntries(fields.map((f) => [f, $(f).value]));
-    data.mix = $("mix").checked;
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {}
+  const CURRENT = "group-generator-settings";
+  const CLASSES = "group-generator-classes";
+
+  let rows = [];
+  let pairs = [];
+  let view = "list";
+
+  const store = {
+    get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+    set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
-  try {
-    const data = JSON.parse(localStorage.getItem(KEY) || "{}");
-    for (const f of fields) if (data[f] !== undefined) $(f).value = data[f];
+
+  const el = (tag, props = {}, ...kids) => {
+    const e = Object.assign(document.createElement(tag), props);
+    e.append(...kids);
+    return e;
+  };
+
+  // Rows <-> whichever view is active.
+  function readRows() {
+    if (view === "list") rows = textToRows($("names").value);
+    return rows;
+  }
+
+  function renderGrid() {
+    const tbody = $("rows");
+    tbody.replaceChildren();
+    rows.forEach((r, i) => {
+      const tr = el("tr");
+      for (const [key, cls, label] of [["last", "", "Last name"], ["first", "", "First name"], ["gender", "g", "Gender"]]) {
+        const input = el("input", { value: r[key] || "", ariaLabel: label });
+        input.dataset.row = i;
+        input.dataset.key = key;
+        tr.append(el("td", { className: cls }, input));
+      }
+      const del = el("button", { className: "icon", title: "Remove row", textContent: "✕" });
+      del.onclick = () => { rows.splice(i, 1); renderGrid(); refresh(); };
+      tr.append(el("td", { className: "x" }, del));
+      tbody.append(tr);
+    });
+  }
+
+  $("rows").addEventListener("input", (e) => {
+    const { row, key } = e.target.dataset;
+    if (row !== undefined) rows[row][key] = e.target.value;
+    refresh();
+  });
+
+  // Excel pastes tab/newline separated cells: spread them across columns and rows.
+  $("rows").addEventListener("paste", (e) => {
+    const text = e.clipboardData.getData("text");
+    if (!/[\t\n]/.test(text)) return;
+    e.preventDefault();
+    const keys = ["last", "first", "gender"];
+    const start = Number(e.target.dataset.row);
+    const col = keys.indexOf(e.target.dataset.key);
+    text.replace(/\r?\n$/, "").split(/\r?\n/).forEach((line, i) => {
+      const cells = line.split("\t");
+      while (rows.length <= start + i) rows.push({ last: "", first: "", gender: "" });
+      cells.forEach((c, j) => { if (col + j < keys.length) rows[start + i][keys[col + j]] = c.trim(); });
+    });
+    renderGrid();
+    refresh();
+  });
+
+  $("addRow").onclick = () => {
+    rows.push({ last: "", first: "", gender: "" });
+    renderGrid();
+    $("rows").querySelector("tr:last-child input").focus();
+  };
+
+  function setView(next) {
+    readRows();
+    view = next;
+    $("listView").hidden = next !== "list";
+    $("gridView").hidden = next !== "grid";
+    $("viewList").setAttribute("aria-pressed", next === "list");
+    $("viewGrid").setAttribute("aria-pressed", next === "grid");
+    if (next === "list") $("names").value = rowsToText(rows);
+    else { if (!rows.length) rows.push({ last: "", first: "", gender: "" }); renderGrid(); }
+    store.set(CURRENT, { ...store.get(CURRENT, {}), view });
+  }
+  $("viewList").onclick = () => setView("list");
+  $("viewGrid").onclick = () => setView("grid");
+  $("names").addEventListener("input", () => { readRows(); refresh(); });
+
+  const fullNames = () => rows.filter((r) => (r.last || "").trim() || (r.first || "").trim())
+    .map((r) => [r.first, r.last].map((s) => (s || "").trim()).filter(Boolean).join(" "));
+
+  function renderPairs() {
+    const names = [...new Set(fullNames())].sort((a, b) => a.localeCompare(b));
+    for (const id of ["pairA", "pairB"]) {
+      const sel = $(id);
+      const prev = sel.value;
+      sel.replaceChildren(...names.map((n) => el("option", { value: n, textContent: n })));
+      if (names.includes(prev)) sel.value = prev;
+    }
+    $("pairB").selectedIndex = Math.min(1, names.length - 1);
+    $("pairs").replaceChildren(...pairs.map((p, i) => {
+      const x = el("button", { className: "icon", title: "Remove", textContent: "✕" });
+      x.onclick = () => { pairs.splice(i, 1); renderPairs(); persist(); };
+      return el("span", { className: "chip" }, `${p[0]} ≠ ${p[1]}`, x);
+    }));
+  }
+
+  $("addPair").onclick = () => {
+    const a = $("pairA").value, b = $("pairB").value;
+    if (!a || !b || a === b) return showError("Pick two different people.");
+    showError("");
+    if (!pairs.some((p) => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a))) pairs.push([a, b]);
+    renderPairs();
+    persist();
+  };
+
+  const snapshot = () => ({ rows: readRows().map((r) => ({ ...r })), pairs, count: parseInt($("count").value, 10), mix: $("mix").checked });
+
+  function apply(data) {
+    rows = (data.rows || []).map((r) => ({ last: r.last || "", first: r.first || "", gender: r.gender || "" }));
+    pairs = (data.pairs || []).map((p) => [...p]);
+    $("count").value = data.count || 2;
     $("mix").checked = !!data.mix;
-  } catch {}
-  for (const id of [...fields, "mix"]) $(id).addEventListener("input", save);
-  $("go").onclick = () => {
-    $("error").textContent = "";
+    if (view === "list") $("names").value = rowsToText(rows); else renderGrid();
+    refresh();
+  }
+
+  function persist() { store.set(CURRENT, { ...snapshot(), view }); }
+
+  function refresh() {
+    let n = 0;
+    try { n = fromRows(rows).length; } catch { n = fullNames().length; }
+    $("count-people").textContent = n ? `(${n})` : "";
+    renderPairs();
+    persist();
+  }
+
+  function showError(msg) { $("error").textContent = msg; }
+
+  function renderGroups(groups) {
+    $("groups").replaceChildren(...groups.map((g, i) => el("div", { className: "card" },
+      el("h2", { textContent: `Group ${i + 1} · ${g.length}` }),
+      el("ul", {}, ...g.map((p) => el("li", {}, el("span", { className: `dot ${p.gender}`, title: p.gender || "unspecified" }), p.name))))));
+  }
+
+  function generate() {
+    showError("");
     $("groups").replaceChildren();
     try {
-      const { parseNames, parseConflicts, generateGroups } = GroupGenerator;
-      const people = parseNames($("names").value);
-      const pairs = parseConflicts($("pairs").value, people);
-      const groups = generateGroups(people, parseInt($("count").value, 10), pairs, $("mix").checked);
-      groups.forEach((g, i) => {
-        const div = document.createElement("div");
-        div.className = "group";
-        const h = document.createElement("h3");
-        h.textContent = `Group ${i + 1}`;
-        const ul = document.createElement("ul");
-        for (const p of g) ul.append(Object.assign(document.createElement("li"), { textContent: p.name }));
-        div.append(h, ul);
-        $("groups").append(div);
-      });
+      const s = snapshot();
+      renderGroups(generateGroups(fromRows(s.rows), s.count, s.pairs, s.mix));
     } catch (e) {
-      $("error").textContent = e.message;
+      showError(e.message);
     }
+  }
+  $("go").onclick = generate;
+  for (const id of ["count", "mix"]) $(id).addEventListener("input", persist);
+
+  $("demo").onclick = () => {
+    apply(demoData());
+    $("className").value = "Demo class";
+    generate();
   };
+
+  // Saved classes
+  function renderSaved(select) {
+    const names = Object.keys(store.get(CLASSES, {})).sort((a, b) => a.localeCompare(b));
+    $("saved").replaceChildren(...names.map((n) => el("option", { value: n, textContent: n })));
+    if (select && names.includes(select)) $("saved").value = select;
+  }
+  const status = (msg) => { $("status").textContent = msg; };
+
+  $("save").onclick = () => {
+    const name = $("className").value.trim();
+    if (!name) return status("Enter a class name to save.");
+    const all = store.get(CLASSES, {});
+    const existed = name in all;
+    all[name] = snapshot();
+    store.set(CLASSES, all);
+    renderSaved(name);
+    status(existed ? `Updated "${name}".` : `Saved "${name}".`);
+  };
+  $("load").onclick = () => {
+    const name = $("saved").value;
+    const data = store.get(CLASSES, {})[name];
+    if (!data) return status("Nothing to load yet.");
+    apply(data);
+    $("className").value = name;
+    showError("");
+    status(`Loaded "${name}". Edit it, then generate groups.`);
+  };
+  $("delete").onclick = () => {
+    const name = $("saved").value;
+    const all = store.get(CLASSES, {});
+    if (!(name in all)) return;
+    delete all[name];
+    store.set(CLASSES, all);
+    renderSaved();
+    status(`Deleted "${name}".`);
+  };
+
+  // Restore the last session.
+  const last = store.get(CURRENT, {});
+  renderSaved();
+  apply(last);
+  if (last.view === "grid") setView("grid");
 </script>
 </body>
 </html>

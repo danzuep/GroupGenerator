@@ -10,8 +10,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test
-        working-directory: src
+      - run: node --test test
       - uses: actions/upload-artifact@v4
         with:
           name: group-generator

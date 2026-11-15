@@ -1,0 +1,5 @@
+baseURL: https://danzuep.github.io/GroupGenerator/
+title: Group Generator
+# The app is plain static files, so Hugo only publishes src/.
+staticDir: [src]
+disableKinds: [page, section, taxonomy, term, RSS, sitemap, robotsTXT, "404"]

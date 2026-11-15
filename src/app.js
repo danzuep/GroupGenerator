@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 
 let rows = [];
 let pairs = [];
-let view = "list";
+let view = "grid";
 
 const el = (tag, props = {}, ...kids) => {
   const e = Object.assign(document.createElement(tag), props);
@@ -58,9 +58,12 @@ $("rows").addEventListener("paste", (e) => {
   refresh();
 });
 
-$("addRow").onclick = () => {
+function addBlankRow() {
   rows.push({ last: "", first: "", gender: "" });
   renderGrid();
+}
+$("addRow").onclick = () => {
+  addBlankRow();
   $("rows").querySelector("tr:last-child input").focus();
 };
 
@@ -216,4 +219,5 @@ renderTheme();
 const last = storage.session.load();
 renderSaved();
 apply(last);
-if (last.view === "grid") setView("grid");
+if (last.view === "list") setView("list");
+else if (!rows.length) addBlankRow();

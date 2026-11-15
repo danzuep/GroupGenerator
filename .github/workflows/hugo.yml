@@ -1,8 +1,9 @@
-name: Deploy to Pages with Hugo
+name: Test and deploy to Pages
 
 on:
   push:
-    branches: [main, group-generator]
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -44,8 +45,19 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
+      - name: Upload downloadable app
+        uses: actions/upload-artifact@v4
+        with:
+          name: group-generator
+          path: |
+            src/index.html
+            src/groups.js
+            src/storage.js
+            src/app.js
+            src/style.css
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

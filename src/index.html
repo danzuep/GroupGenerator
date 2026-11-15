@@ -39,15 +39,15 @@
     <div class="bar between">
       <h2>Names <span id="count-people" class="hint"></span></h2>
       <div class="seg" role="group" aria-label="Name entry view">
-        <button id="viewList" aria-pressed="true">List</button>
-        <button id="viewGrid" aria-pressed="false">Grid</button>
+        <button id="viewList" aria-pressed="false">List</button>
+        <button id="viewGrid" aria-pressed="true">Grid</button>
       </div>
     </div>
-    <div id="listView">
+    <div id="listView" hidden>
       <textarea id="names" aria-label="Names" placeholder="Last, First, Gender&#10;Lee, Ann, F&#10;Ray, Bob, M"></textarea>
       <p class="hint">One person per line: <b>Last, First, Gender</b>. Gender is optional. Pasting from Excel works.</p>
     </div>
-    <div id="gridView" hidden>
+    <div id="gridView">
       <div class="tablewrap">
         <table>
           <thead><tr><th>Last name</th><th>First name</th><th>Gender</th><th></th></tr></thead>

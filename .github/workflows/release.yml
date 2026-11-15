@@ -1,25 +1,20 @@
-name: group-generator
+name: Build
 on:
-  push:
-    branches: [group-generator]
-    paths: [group-generator/**]
   pull_request:
-    paths: [group-generator/**]
   workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: group-generator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: node --test
-      - run: mkdir dist && cp index.html groups.js dist/
+        working-directory: src
       - uses: actions/upload-artifact@v4
         with:
           name: group-generator
-          path: group-generator/dist/
+          path: |
+            src/index.html
+            src/groups.js

@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 let rows = [];
 let pairs = [];
 let view = "grid";
+let fullNameEntry = false;
 
 const el = (tag, props = {}, ...kids) => {
   const e = Object.assign(document.createElement(tag), props);
@@ -13,17 +14,27 @@ const el = (tag, props = {}, ...kids) => {
 
 // Rows <-> whichever view is active.
 function readRows() {
-  if (view === "list") rows = textToRows($("names").value);
+  if (view === "list") rows = textToRows($("names").value, fullNameEntry);
   return rows;
 }
 
 function renderGrid() {
   const tbody = $("rows");
   tbody.replaceChildren();
+  const headers = fullNameEntry
+    ? [["Full name", ""], ["Gender", "g"], ["", "x"]]
+    : [["Last name", ""], ["First name", ""], ["Gender", "g"], ["", "x"]];
+  $("nameHeaders").replaceChildren(...headers.map(([label, cls]) => el("th", { textContent: label, className: cls })));
   rows.forEach((r, i) => {
     const tr = el("tr");
-    for (const [key, cls, label] of [["last", "", "Last name"], ["first", "", "First name"], ["gender", "g", "Gender"]]) {
-      const input = el("input", { value: r[key] || "", ariaLabel: label });
+    const fields = fullNameEntry
+      ? [["name", "", "Full name"], ["gender", "g", "Gender"]]
+      : [["last", "", "Last name"], ["first", "", "First name"], ["gender", "g", "Gender"]];
+    for (const [key, cls, label] of fields) {
+      const value = key === "name"
+        ? r.name || [r.first, r.last].filter(Boolean).join(" ")
+        : key === "first" ? r.first || r.name || "" : r[key] || "";
+      const input = el("input", { value, ariaLabel: label });
       input.dataset.row = i;
       input.dataset.key = key;
       tr.append(el("td", { className: cls }, input));
@@ -37,7 +48,14 @@ function renderGrid() {
 
 $("rows").addEventListener("input", (e) => {
   const { row, key } = e.target.dataset;
-  if (row !== undefined) rows[row][key] = e.target.value;
+  if (row !== undefined) {
+    if (key === "name") {
+      rows[row] = { name: e.target.value, gender: rows[row].gender || "" };
+    } else {
+      if (key === "first" || key === "last") delete rows[row].name;
+      rows[row][key] = e.target.value;
+    }
+  }
   refresh();
 });
 
@@ -46,20 +64,29 @@ $("rows").addEventListener("paste", (e) => {
   const text = e.clipboardData.getData("text");
   if (!/[\t\n]/.test(text)) return;
   e.preventDefault();
-  const keys = ["last", "first", "gender"];
+  const keys = fullNameEntry ? ["name", "gender"] : ["last", "first", "gender"];
   const start = Number(e.target.dataset.row);
   const col = keys.indexOf(e.target.dataset.key);
   text.replace(/\r?\n$/, "").split(/\r?\n/).forEach((line, i) => {
     const cells = line.split("\t");
-    while (rows.length <= start + i) rows.push({ last: "", first: "", gender: "" });
-    cells.forEach((c, j) => { if (col + j < keys.length) rows[start + i][keys[col + j]] = c.trim(); });
+    while (rows.length <= start + i) rows.push(fullNameEntry ? { name: "", gender: "" } : { last: "", first: "", gender: "" });
+    cells.forEach((c, j) => {
+      const key = keys[col + j];
+      if (key) {
+        if (key === "name") rows[start + i] = { name: c.trim(), gender: rows[start + i].gender || "" };
+        else {
+          if (key === "first" || key === "last") delete rows[start + i].name;
+          rows[start + i][key] = c.trim();
+        }
+      }
+    });
   });
   renderGrid();
   refresh();
 });
 
 function addBlankRow() {
-  rows.push({ last: "", first: "", gender: "" });
+  rows.push(fullNameEntry ? { name: "", gender: "" } : { last: "", first: "", gender: "" });
   renderGrid();
 }
 $("addRow").onclick = () => {
@@ -74,7 +101,7 @@ function setView(next) {
   $("gridView").hidden = next !== "grid";
   $("viewList").setAttribute("aria-pressed", next === "list");
   $("viewGrid").setAttribute("aria-pressed", next === "grid");
-  if (next === "list") $("names").value = rowsToText(rows);
+  if (next === "list") $("names").value = rowsToText(rows, fullNameEntry);
   else { if (!rows.length) rows.push({ last: "", first: "", gender: "" }); renderGrid(); }
   storage.session.save({ ...storage.session.load(), view });
 }
@@ -82,8 +109,24 @@ $("viewList").onclick = () => setView("list");
 $("viewGrid").onclick = () => setView("grid");
 $("names").addEventListener("input", () => { readRows(); refresh(); });
 
-const fullNames = () => rows.filter((r) => (r.last || "").trim() || (r.first || "").trim())
-  .map((r) => [r.first, r.last].map((s) => (s || "").trim()).filter(Boolean).join(" "));
+const fullNames = () => rows.filter((r) => (r.name || "").trim() || (r.last || "").trim() || (r.first || "").trim())
+  .map((r) => (r.name || [r.first, r.last].filter(Boolean).join(" ")).trim());
+
+function updateNameEntryMode() {
+  readRows();
+  fullNameEntry = $("fullNameEntry").checked;
+  rows = fullNameEntry
+    ? rows.map((r) => ({ name: r.name || [r.first, r.last].filter(Boolean).join(" "), gender: r.gender || "" }))
+    : rows.map((r) => r.name ? { last: "", first: r.name, gender: r.gender || "" } : r);
+  $("listHint").innerHTML = fullNameEntry
+    ? 'One full name per line. Add optional gender after a tab. Pasting from Excel works.'
+    : 'One person per line: <b>Last, First, Gender</b>. Gender is optional. Pasting from Excel works.';
+  $("names").placeholder = fullNameEntry ? "Full name [tab] Gender\nAnn Lee\tF\nBob Ray\tM" : "Last, First, Gender\nLee, Ann, F\nRay, Bob, M";
+  if (view === "list") $("names").value = rowsToText(rows, fullNameEntry);
+  else renderGrid();
+  refresh();
+}
+$("fullNameEntry").addEventListener("change", updateNameEntryMode);
 
 function renderPairs() {
   const names = [...new Set(fullNames())].sort((a, b) => a.localeCompare(b));
@@ -110,14 +153,20 @@ $("addPair").onclick = () => {
   persist();
 };
 
-const snapshot = () => ({ rows: readRows().map((r) => ({ ...r })), pairs, count: parseInt($("count").value, 10), mix: $("mix").checked });
+const snapshot = () => ({ rows: readRows().map((r) => ({ ...r })), pairs, count: parseInt($("count").value, 10), mix: $("mix").checked, fullNameEntry });
 
 function apply(data) {
-  rows = (data.rows || []).map((r) => ({ last: r.last || "", first: r.first || "", gender: r.gender || "" }));
+  rows = (data.rows || []).map((r) => ({ ...r, last: r.last || "", first: r.first || "", gender: r.gender || "" }));
   pairs = (data.pairs || []).map((p) => [...p]);
   $("count").value = data.count || 2;
   $("mix").checked = !!data.mix;
-  if (view === "list") $("names").value = rowsToText(rows); else renderGrid();
+  fullNameEntry = !!data.fullNameEntry;
+  $("fullNameEntry").checked = fullNameEntry;
+  $("listHint").innerHTML = fullNameEntry
+    ? "One full name per line. Add optional gender after a tab. Pasting from Excel works."
+    : 'One person per line: <b>Last, First, Gender</b>. Gender is optional. Pasting from Excel works.';
+  $("names").placeholder = fullNameEntry ? "Full name [tab] Gender\nAnn Lee\tF\nBob Ray\tM" : "Last, First, Gender\nLee, Ann, F\nRay, Bob, M";
+  if (view === "list") $("names").value = rowsToText(rows, fullNameEntry); else renderGrid();
   refresh();
 }
 

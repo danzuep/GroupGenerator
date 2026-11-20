@@ -17,6 +17,14 @@ test("rows round-trip through text", () => {
   assert.strictEqual(rowsToText(textToRows(text)), text);
 });
 
+test("full-name entry preserves names and optional tab-separated gender", () => {
+  const text = "Ann Lee\tF\nBob Ray";
+  const rows = textToRows(text, true);
+  assert.deepStrictEqual(rows, [{ name: "Ann Lee", gender: "F" }, { name: "Bob Ray", gender: "" }]);
+  assert.strictEqual(rowsToText(rows, true), text);
+  assert.deepStrictEqual(fromRows(rows).map((p) => [p.name, p.gender]), [["Ann Lee", "f"], ["Bob Ray", ""]]);
+});
+
 test("rejects duplicate names", () => {
   assert.throws(() => parseNames("Lee, Ann\nlee, ann"), /Duplicate/);
 });

@@ -2,8 +2,9 @@
 
 A dependency-free page that splits a list of unique names into groups.
 
-- Enter names as `Last, First, Gender` (gender optional) in the Grid (default) or List view, and paste columns straight from Excel.
+- Enter names as `Last, First, Gender` (gender optional) in the Grid (default) or List view, and paste columns straight from Excel. Enable **Enter full names** to use a single full-name field; in List view, optional gender can follow the name after a tab.
 - Choose the number of groups, pick pairs to keep apart, and optionally mix genders evenly.
+- Expand **Keep apart** only when needed to keep the student display uncluttered.
 - **Save** a class by name and **Load** it again next term; settings are stored in the browser's localStorage.
 - A light/dark **theme toggle** (defaults to your system setting, remembered per browser).
 - **Demo** fills in pseudo-random sample data and generates groups in one click.

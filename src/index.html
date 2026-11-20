@@ -43,14 +43,15 @@
         <button id="viewGrid" aria-pressed="true">Grid</button>
       </div>
     </div>
+    <p class="bar"><label><input id="fullNameEntry" type="checkbox"> Enter full names</label></p>
     <div id="listView" hidden>
       <textarea id="names" aria-label="Names" placeholder="Last, First, Gender&#10;Lee, Ann, F&#10;Ray, Bob, M"></textarea>
-      <p class="hint">One person per line: <b>Last, First, Gender</b>. Gender is optional. Pasting from Excel works.</p>
+      <p id="listHint" class="hint">One person per line: <b>Last, First, Gender</b>. Gender is optional. Pasting from Excel works.</p>
     </div>
     <div id="gridView">
       <div class="tablewrap">
         <table>
-          <thead><tr><th>Last name</th><th>First name</th><th>Gender</th><th></th></tr></thead>
+          <thead><tr id="nameHeaders"></tr></thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
@@ -60,8 +61,8 @@
   </section>
 
   <div class="cols">
-    <section class="card" aria-label="Separate people">
-      <h2>Keep apart</h2>
+    <details class="card" aria-label="Separate people">
+      <summary><h2>Keep apart</h2></summary>
       <div class="bar">
         <select id="pairA" aria-label="First person"></select>
         <span>+</span>
@@ -70,7 +71,7 @@
       </div>
       <div class="chips" id="pairs"></div>
       <p class="hint">These people won't be placed in the same group.</p>
-    </section>
+    </details>
 
     <section class="card" aria-label="Options">
       <h2>Options</h2>

@@ -8,8 +8,8 @@
     for (const r of rows) {
       const last = clean(r.last);
       const first = clean(r.first);
-      if (!last && !first) continue;
-      const name = [first, last].filter(Boolean).join(" ");
+      const name = clean(r.name) || [first, last].filter(Boolean).join(" ");
+      if (!name) continue;
       const key = name.toLowerCase();
       if (seen.has(key)) throw new Error(`Duplicate name: ${name}`);
       seen.add(key);
@@ -19,20 +19,32 @@
   }
 
   // "Last, First, Gender" per line; tabs (pasted from Excel) work too. A single field is a lone name.
-  function textToRows(text) {
+  function textToRows(text, fullNameEntry = false) {
     return text
       .split(/\r?\n/)
       .filter((line) => line.trim())
       .map((line) => {
+        if (fullNameEntry) {
+          const [name, gender = ""] = line.split("\t").map(clean);
+          return { name, gender };
+        }
         const f = line.split(/\t|,/).map(clean);
         return f.length === 1 ? { last: "", first: f[0], gender: "" } : { last: f[0], first: f[1], gender: f[2] || "" };
       });
   }
 
-  const rowsToText = (rows) =>
+  const rowsToText = (rows, fullNameEntry = false) =>
     rows
-      .filter((r) => clean(r.last) || clean(r.first))
-      .map((r) => [r.last, r.first, r.gender].map(clean).join(", ").replace(/(, )+$/, ""))
+      .filter((r) => clean(r.name) || clean(r.last) || clean(r.first))
+      .map((r) => {
+        if (fullNameEntry) {
+          const name = clean(r.name) || [clean(r.first), clean(r.last)].filter(Boolean).join(" ");
+          return [name, clean(r.gender)].filter(Boolean).join("\t");
+        }
+        if (clean(r.name)) return [clean(r.name), "", clean(r.gender)].map(clean).join(", ").replace(/(, )+$/, "");
+        if (!clean(r.last) && clean(r.first) && !clean(r.gender)) return clean(r.first);
+        return [r.last, r.first, r.gender].map(clean).join(", ").replace(/(, )+$/, "");
+      })
       .join("\n");
 
   const parseNames = (text) => fromRows(textToRows(text));
